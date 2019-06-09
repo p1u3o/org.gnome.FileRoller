@@ -1,0 +1,130 @@
+{
+    "app-id":"org.gnome.FileRoller",
+    "runtime":"org.gnome.Platform",
+    "runtime-version":"master",
+    "sdk":"org.gnome.Sdk",
+    "command":"file-roller.sh",
+    "tags":[
+        "nightly"
+    ],
+    "desktop-file-name-suffix":" ☢",
+    "rename-icon":"org.gnome.ArchiveManager",
+    "finish-args":[
+        "--share=ipc",
+        "--socket=x11",
+        "--socket=wayland",
+        "--talk-name=org.gtk.vfs",
+        "--talk-name=org.gtk.vfs.*",
+        "--filesystem=home",
+        "--filesystem=xdg-run/dconf",
+        "--filesystem=~/.config/dconf:ro",
+        "--talk-name=ca.desrt.dconf",
+        "--env=DCONF_USER_CONFIG_DIR=.config/dconf"
+    ],
+    "modules":[
+        {
+            "name":"gcpio",
+            "buildsystem":"autotools",
+            "cleanup":[
+                "/share/man/"
+            ],
+            "sources":[
+                {
+                    "type":"archive",
+                    "url":"https://ftp.gnu.org/gnu/cpio/cpio-2.12.tar.gz",
+                    "sha256":"08a35e92deb3c85d269a0059a27d4140a9667a6369459299d08c17f713a92e73"
+                }
+            ]
+        },
+        {
+            "name":"file-roller",
+            "buildsystem":"meson",
+            "cleanup":[
+                "org.gnome.FileRoller.ArchiveManager1.service"
+            ],
+            "sources":[
+                {
+                    "type":"git",
+                    "url":"https://gitlab.gnome.org/GNOME/file-roller.git"
+                }
+            ],
+            "post-install": [
+              "desktop-file-edit --set-key=Exec --set-value='file-roller.sh %U' /app/share/applications/org.gnome.FileRoller.desktop"
+            ]
+        },
+        {
+            "name":"p7zip",
+            "buildsystem":"simple",
+            "build-commands":[
+                "cp makefile.linux_amd64_asm makefile.machine",
+                "make -j$FLATPAK_BUILDER_N_JOBS 7za",
+                "install -Dm 755 bin/7za /app/bin/7za"
+            ],
+            "sources":[
+                {
+                    "type":"archive",
+                    "url":"https://downloads.sourceforge.net/project/p7zip/p7zip/16.02/p7zip_16.02_src_all.tar.bz2",
+                    "sha256":"5eb20ac0e2944f6cb9c2d51dd6c4518941c185347d4089ea89087ffdd6e2341f"
+                }
+            ], 
+            "modules":
+            [
+                {
+                    "name": "yasm",
+                    "sources": [
+                        {
+                            "type": "archive",
+                            "url": "https://www.tortall.net/projects/yasm/releases/yasm-1.3.0.tar.gz",
+                            "sha256": "3dce6601b495f5b3d45b59f7d2492a340ee7e84b5beca17e48f862502bd5603f"
+                        }
+                    ],
+                    "cleanup": [
+                        "*"
+                    ]
+                }
+            ]
+        },
+        {
+            "name":"unrar",
+            "buildsystem":"simple",
+            "build-commands":[
+                "install -Dm755 apply_extra /app/bin/apply_extra"
+            ],
+            "sources":[
+                {
+                    "type":"extra-data",
+                    "url":"https://www.rarlab.com/rar/rarlinux-x64-5.7.1.tar.gz",
+                    "filename":"rarlinux-x64-5.7.1.tar.gz",
+                    "sha256":"bebf9912cde20ba0400bf9e494fa586a331c5584f3abc183e3424d57f0ff0251",
+                    "size":546592
+                },
+                {
+                    "type":"script",
+                    "dest-filename":"apply_extra",
+                    "commands":[
+                        "mkdir bin",
+                        "tar --no-same-owner -C bin -xf rarlinux*.tar.gz rar/rar rar/unrar rar/license.txt",
+                        "rm rarlinux*.tar.gz"
+                    ]
+                }
+            ]
+        },
+        {
+            "name":"file-roller.sh",
+            "buildsystem":"simple",
+            "build-commands":[
+                "install -D file-roller.sh /app/bin/file-roller.sh"
+            ],
+            "sources":[
+                {
+                    "type":"script",
+                    "dest-filename":"file-roller.sh",
+                    "commands":[
+                        "env PATH=$PATH:/app/extra/bin/rar file-roller $@"
+                    ]
+                }
+            ]
+        }
+
+    ]
+}
