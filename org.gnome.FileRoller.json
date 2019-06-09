@@ -3,7 +3,7 @@
     "runtime":"org.gnome.Platform",
     "runtime-version":"master",
     "sdk":"org.gnome.Sdk",
-    "command":"file-roller.sh",
+    "command":"file-roller",
     "tags":[
         "nightly"
     ],
@@ -19,7 +19,8 @@
         "--filesystem=xdg-run/dconf",
         "--filesystem=~/.config/dconf:ro",
         "--talk-name=ca.desrt.dconf",
-        "--env=DCONF_USER_CONFIG_DIR=.config/dconf"
+        "--env=DCONF_USER_CONFIG_DIR=.config/dconf",
+        "--env=PATH=/app/bin:/usr/bin:/app/extra/bin"
     ],
     "modules":[
         {
@@ -47,9 +48,6 @@
                     "type":"git",
                     "url":"https://gitlab.gnome.org/GNOME/file-roller.git"
                 }
-            ],
-            "post-install": [
-              "desktop-file-edit --set-key=Exec --set-value='file-roller.sh %U' /app/share/applications/org.gnome.FileRoller.desktop"
             ]
         },
         {
@@ -102,25 +100,11 @@
                     "type":"script",
                     "dest-filename":"apply_extra",
                     "commands":[
-                        "mkdir bin",
-                        "tar --no-same-owner -C bin -xf rarlinux*.tar.gz rar/rar rar/unrar rar/license.txt",
+                        "mkdir bin rar",
+                        "tar --no-same-owner -xf rarlinux*.tar.gz rar/rar rar/unrar rar/license.txt",
+                        "mv rar/* bin",
+                        "rm -r rar",
                         "rm rarlinux*.tar.gz"
-                    ]
-                }
-            ]
-        },
-        {
-            "name":"file-roller.sh",
-            "buildsystem":"simple",
-            "build-commands":[
-                "install -D file-roller.sh /app/bin/file-roller.sh"
-            ],
-            "sources":[
-                {
-                    "type":"script",
-                    "dest-filename":"file-roller.sh",
-                    "commands":[
-                        "env PATH=$PATH:/app/extra/bin/rar file-roller $@"
                     ]
                 }
             ]
